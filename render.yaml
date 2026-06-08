@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: webmedia-xhs-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: LOG_LEVEL
+        value: info
+      - key: XHS_API_TOKEN
+        sync: false
