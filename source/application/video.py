@@ -11,6 +11,10 @@ class Video:
         "originVideoKey",
     )
     STREAM_LINKS = (
+        "video.media.stream.h264[0].masterUrl",
+        "video.media.stream.h265[0].masterUrl",
+        "video.media.stream.h266[0].masterUrl",
+        "video.media.stream.av1[0].masterUrl",
         "media.stream.h264[0].masterUrl",
         "media.stream.h265[0].masterUrl",
         "media.stream.h266[0].masterUrl",
