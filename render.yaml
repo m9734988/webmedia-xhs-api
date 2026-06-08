@@ -10,3 +10,9 @@ services:
         value: info
       - key: XHS_API_TOKEN
         sync: false
+      - key: XHS_COOKIE
+        sync: false
+      - key: XHS_PROXY
+        sync: false
+      - key: XHS_IMAGE_FORMAT
+        value: PNG

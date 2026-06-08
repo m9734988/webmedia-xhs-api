@@ -30,26 +30,42 @@ Authorization: Bearer <XHS_API_TOKEN>
 `XHS_API_TOKEN` is optional. If it is empty, `/xhs/detail` is public. If it is
 set, the caller must send the matching bearer token.
 
+## Environment Variables
+
+```env
+LOG_LEVEL=info
+XHS_API_TOKEN=
+XHS_COOKIE=
+XHS_PROXY=
+XHS_IMAGE_FORMAT=PNG
+```
+
+- `XHS_COOKIE`: Optional RedNote/Xiaohongshu web cookie. Some posts can return
+  title data but no media URL without this.
+- `XHS_PROXY`: Optional HTTP proxy URL.
+- `XHS_IMAGE_FORMAT`: `PNG`, `WEBP`, `JPEG`, `HEIC`, `AVIF`, or `AUTO`.
+
 ## Render Deploy
 
 1. Push this folder to a GitHub repository.
 2. Create a Render Blueprint from the repository.
 3. Render will read `render.yaml` and build the Docker service.
 4. Set `XHS_API_TOKEN` during Blueprint setup if you want a private API.
-5. After deploy, copy the Render service URL, for example:
+5. Set `XHS_COOKIE` if public posts return metadata but no downloadable media.
+6. After deploy, copy the Render service URL, for example:
 
 ```text
 https://webmedia-xhs-api.onrender.com
 ```
 
-6. In the Vercel project for the main site, set:
+7. In the Vercel project for the main site, set:
 
 ```env
 XHS_API_BASE_URL=https://webmedia-xhs-api.onrender.com
 XHS_API_TOKEN=<same token if configured>
 ```
 
-7. Redeploy the main Vercel site.
+8. Redeploy the main Vercel site.
 
 ## Local Run
 

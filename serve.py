@@ -19,8 +19,16 @@ async def main() -> None:
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "5556"))
     log_level = os.getenv("LOG_LEVEL", "info")
+    settings = Settings().run()
 
-    async with XHS(**Settings().run()) as xhs:
+    if cookie := os.getenv("XHS_COOKIE", "").strip():
+        settings["cookie"] = cookie
+    if proxy := os.getenv("XHS_PROXY", "").strip():
+        settings["proxy"] = proxy
+    if image_format := os.getenv("XHS_IMAGE_FORMAT", "").strip():
+        settings["image_format"] = image_format.upper()
+
+    async with XHS(**settings) as xhs:
         app = FastAPI(title="WebMedia XHS API", version="1.0")
 
         @app.middleware("http")
