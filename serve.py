@@ -1,6 +1,7 @@
 import os
 from asyncio import run
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -17,6 +18,8 @@ allowed_event_keys = {
     "code",
     "message",
     "inputPreview",
+    "inputHost",
+    "inputPath",
     "sourceUrl",
     "durationMs",
     "mediaCount",
@@ -36,7 +39,8 @@ async def main() -> None:
     log_level = os.getenv("LOG_LEVEL", "info")
     settings = Settings().run()
 
-    if cookie := os.getenv("XHS_COOKIE", "").strip():
+    cookie = os.getenv("XHS_COOKIE", "").strip()
+    if cookie:
         settings["cookie"] = cookie
     if proxy := os.getenv("XHS_PROXY", "").strip():
         settings["proxy"] = proxy
@@ -54,7 +58,12 @@ async def main() -> None:
 
         @app.get("/health")
         async def health():
-            return {"ok": True}
+            return {
+                "ok": True,
+                "cookieConfigured": bool(cookie),
+                "cookieLength": len(cookie),
+                "cookieHint": "已配置小红书 Cookie" if cookie else "未配置小红书 Cookie",
+            }
 
         @app.post("/logs/parse")
         async def record_parse_log(request: Request):
@@ -67,12 +76,19 @@ async def main() -> None:
             event["createdAt"] = event.get("createdAt") or datetime.now(timezone.utc).isoformat()
             event["platform"] = str(event.get("platform") or "unknown")[:40]
             event["ok"] = bool(event.get("ok"))
+            event.update(sanitize_locator(raw_event.get("sourceUrl") or raw_event.get("inputPreview") or ""))
+            event.pop("inputPreview", None)
             for key in ("code", "message", "inputPreview", "sourceUrl"):
                 if event.get(key) is not None:
                     event[key] = str(event[key])[:500]
 
             parse_events.insert(0, event)
             del parse_events[max_parse_events:]
+            return {"ok": True}
+
+        @app.delete("/logs/parse")
+        async def clear_parse_logs():
+            parse_events.clear()
             return {"ok": True}
 
         @app.get("/logs/stats")
@@ -108,6 +124,24 @@ async def main() -> None:
 
         xhs.setup_routes(app)
         await Server(Config(app, host=host, port=port, log_level=log_level)).serve()
+
+
+def sanitize_locator(value: object) -> dict[str, str]:
+    text = str(value or "")
+    marker = "http"
+    index = text.lower().find(marker)
+    if index > 0:
+        text = text[index:]
+    try:
+        parsed = urlparse(text.strip())
+    except ValueError:
+        return {}
+    if not parsed.netloc:
+        return {}
+    return {
+        "inputHost": parsed.netloc[:120],
+        "inputPath": parsed.path[:160],
+    }
 
 
 if __name__ == "__main__":
